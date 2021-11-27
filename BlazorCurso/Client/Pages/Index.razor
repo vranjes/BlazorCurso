@@ -1,25 +1,23 @@
 ﻿@page "/"
 @inject IRepositorio _repositorio
-
+ 
 <div>
     <h3>En Cartelera</h3>
-    <ListadoPeliculasConRenderFragmentGenerico ListaPeliculas="EnCartelera"></ListadoPeliculasConRenderFragmentGenerico>
+    <ListadoPeliculasConRenderFragmentGenerico ListaPeliculas="HomePageDTO.PeliculasEnCartera"></ListadoPeliculasConRenderFragmentGenerico>
 </div>
 <div>
     <h3>Próximos Estrenos</h3>
-    <ListadoPeliculasConRenderFragmentGenerico ListaPeliculas="FuturosEstrenos"></ListadoPeliculasConRenderFragmentGenerico>
+    <ListadoPeliculasConRenderFragmentGenerico ListaPeliculas="HomePageDTO.ProximosEstrenos"></ListadoPeliculasConRenderFragmentGenerico>
 </div>
 
 
 @code {
 
-    public List<Pelicula> FuturosEstrenos { get; set; }
-    public List<Pelicula> EnCartelera { get; set; }
+    public HomePageDTO HomePageDTO { get; set; }
 
     protected async override Task OnInitializedAsync()
     {
         var responseHttp = await _repositorio.Get<HomePageDTO>("api/peliculas");
-        FuturosEstrenos = responseHttp.Response.ProximosEstrenos;
-        EnCartelera = responseHttp.Response.PeliculasEnCartera;
+        HomePageDTO = responseHttp.Response;
     }
 }
