@@ -1,0 +1,22 @@
+﻿@page "/generos/editar/{GeneroId:int}"
+@inject NavigationManager navigationManager
+<h3>Editar Género</h3>
+
+<FormularioGenero Genero="genero" OnValidSubmit="GuardarCambios" />
+
+@code {
+    [Parameter] public int GeneroId { get; set; }
+    private Genero genero = new Genero();
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine($"Inicializo el genero con id {GeneroId}");
+        genero = new Genero() { Id = GeneroId, Nombre = "Comedia" };
+    }
+
+    private void GuardarCambios()
+    {
+        Console.WriteLine($"Guardo los cambios en el Género {genero.Nombre}");
+        navigationManager.NavigateTo("/generos");
+    }
+}

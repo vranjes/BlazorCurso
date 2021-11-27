@@ -1,0 +1,47 @@
+﻿@typeparam Titem
+
+@if (ListaGenerica == null)
+{
+    @if (Cargando == null)
+    {
+        <text>Cargando...</text>
+    }
+    else
+    {
+        @Cargando
+    }
+}
+else if (ListaGenerica.Count == 0)
+{
+    @if (NoRegistros == null)
+    {
+        <text>No hay registros</text>
+    }
+    else
+    {
+        @NoRegistros
+    }
+}
+else
+{
+    if (HayRegistros != null)
+    {
+        @foreach (var item in ListaGenerica)
+        {
+            @HayRegistros(item)
+        }
+    }
+    else
+    {
+        @HayRegistrosCompleto
+    }
+}
+
+@code {
+
+    [Parameter] public List<Titem> ListaGenerica { get; set; }
+    [Parameter] public RenderFragment Cargando { get; set; }
+    [Parameter] public RenderFragment NoRegistros { get; set; }
+    [Parameter] public RenderFragment<Titem> HayRegistros { get; set; }
+    [Parameter] public RenderFragment HayRegistrosCompleto { get; set; }
+}

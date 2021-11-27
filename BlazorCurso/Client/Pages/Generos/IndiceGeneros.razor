@@ -1,0 +1,41 @@
+﻿@page "/generos"
+@inject IRepositorio _repositorio
+
+<h3>Indice Generos</h3>
+
+<div class="form-group">
+    <a class="btn btn-info" type="button" href="generos/crear">Agregar Género</a>
+</div>
+
+<ListadoGenerico ListaGenerica="Generos">
+    <HayRegistrosCompleto>
+        <table class="table table-striped" >
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Nombre</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var genero in Generos)
+                {
+                    <tr>
+                        <td>
+                            <a class="btn btn-success">Editar</a>
+                            <button class="btn btn-danger">Borrar</button>
+                        </td>
+                        <td>@genero.Nombre</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </HayRegistrosCompleto>
+</ListadoGenerico>
+@code {
+    public List<Genero> Generos { get; set; }
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await _repositorio.Get<List<Genero>>("api/generos");
+        Generos = responseHttp.Response;
+    }
+}

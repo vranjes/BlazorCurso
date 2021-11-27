@@ -1,0 +1,42 @@
+﻿@page  "/peliculas/crear"
+@inject NavigationManager _navigationManager
+@inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
+
+<h3>Crear Pelicula</h3>
+
+@if (mostrarFormulario)
+{
+    <FormularioPeliculas pelicula="pelicula" OnValidSubmit="Crear" GenerosNoSeleccionados="GenerosNoSeleccionados"></FormularioPeliculas>
+}
+else
+{
+    <text>Cargando...</text>
+}
+
+@code {
+    private bool mostrarFormulario = false;
+    private Pelicula pelicula = new Pelicula();
+    private List<Genero> GenerosNoSeleccionados = new List<Genero>();
+
+    async void Crear()
+    {
+        var httpResponse = await _repositorio.Post<Pelicula, int>("api/peliculas", pelicula);
+        if (httpResponse.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await httpResponse.GetBody());
+        }
+        else
+        {
+            _navigationManager.NavigateTo($"pelicula/{httpResponse.Response}/{pelicula.Titulo.Replace(" ", "-")}");
+        }
+
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHttp = await _repositorio.Get<List<Genero>>("api/generos");
+        GenerosNoSeleccionados = responseHttp.Response;
+        mostrarFormulario = true;
+    }
+}

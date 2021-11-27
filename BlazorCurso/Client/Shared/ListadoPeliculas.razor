@@ -1,0 +1,33 @@
+﻿<h3>ListadoPeliculas</h3>
+
+@if (ListaPeliculas == null)
+{
+    <img src="https://giphy.com/embed/11ASZtb7vdJagM" />
+}
+else
+{
+    <div>
+        @foreach (var pelicula in ListaPeliculas)
+        {
+            <p>@pelicula.Titulo</p>
+            <p>@pelicula.Lanzamiento.Value.ToShortDateString()</p>
+        }
+    </div>
+}
+
+@code {
+    public List<Pelicula> ListaPeliculas { get; set; }
+
+    private List<Pelicula> ObtenerPeliculas()
+    {
+        return new List<Pelicula>() { new Pelicula() { Titulo = "Origen", Lanzamiento = new DateTime(2015, 1, 1) },
+                                      new Pelicula() { Titulo = "1917", Lanzamiento = new DateTime(2021, 1, 1) },
+                                      new Pelicula() { Titulo = "Tintin", Lanzamiento = new DateTime(2017, 1, 1) } };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(3000);
+        ListaPeliculas = ObtenerPeliculas();
+    }
+}

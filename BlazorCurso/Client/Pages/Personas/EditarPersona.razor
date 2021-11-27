@@ -1,0 +1,20 @@
+﻿@page  "/personas/editar/{PersonaId:int}"
+
+<h3>Editar Persona</h3>
+
+<FormularioPersona persona="personaAGuardar" OnValidSubmit="Editar"/>
+
+@code {
+    [Parameter] public int PersonaId { get; set; }
+    private Persona personaAGuardar;
+
+    protected override void OnInitialized()
+    {
+        personaAGuardar = new Persona() { Id = PersonaId, Nombre = "Persona de pruebas", FechaNacimiento = new DateTime(1986, 12, 20), Biografía = "Su biografía" };
+    }
+
+    void Editar()
+    {
+        Console.WriteLine($"Se han guardado los cambios para la persona: {personaAGuardar.Nombre}");
+    }
+}

@@ -1,0 +1,28 @@
+﻿@page  "/personas/crear"
+@inject IRepositorio _repositorio
+@inject NavigationManager _navigationManager
+@inject IMostrarMensajes _mostrarMensajes
+
+<h3>Crear Persona</h3>
+
+<FormularioPersona OnValidSubmit="Crear" persona="persona" />
+
+@code {
+    private Persona persona = new Persona();
+
+    async Task Crear()
+    {
+        var httpResponse = await _repositorio.Post("api/personas", persona);
+        if (httpResponse.Error)
+        {
+           await  _mostrarMensajes.MostrarMensajeError(await httpResponse.GetBody());
+        }
+        else
+        {
+            Console.WriteLine("Éxito");
+            _navigationManager.NavigateTo("/personas");
+        }
+
+        Console.WriteLine($"Persona creada con nombre: {persona.Nombre}");
+    }
+}

@@ -1,0 +1,28 @@
+﻿@page "/generos/crear"
+@inject IRepositorio _repositorio
+@inject NavigationManager _navigationManager
+@inject IMostrarMensajes _mostrarMensajes
+<h3>Crear Genero</h3>
+
+<FormularioGenero Genero="genero" OnValidSubmit="Crear"/>
+
+@code {
+    private Genero genero = new Genero();
+
+    private async void Crear()
+    {
+        var httpResponse = await _repositorio.Post("api/generos", genero);
+        if (httpResponse.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await httpResponse.GetBody());
+        }
+        else
+        {
+            Console.WriteLine("Éxito");
+            _navigationManager.NavigateTo("/generos");
+        }
+
+        Console.WriteLine("ejecutando el método Crear");
+        Console.WriteLine($"Nombre del género: {genero.Nombre}");
+    }
+}

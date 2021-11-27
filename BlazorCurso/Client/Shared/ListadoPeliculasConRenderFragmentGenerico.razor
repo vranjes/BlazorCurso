@@ -1,0 +1,47 @@
+﻿@inject IJSRuntime js
+
+@if (ListaPeliculas == null)
+{
+    @if (Cargando == null)
+    {
+        <text>Cargando...</text>
+    }
+    else
+    {
+        @Cargando
+    }
+}
+else if (ListaPeliculas.Count == 0)
+{
+    @if (NoRegistros == null)
+    {
+        <text>No hay registros</text>
+    }
+    else
+    {
+        @NoRegistros
+    }
+}
+else
+{
+    <div style="display: flex; flex-wrap:wrap; align-items:center;">
+        <ListadoGenerico ListaGenerica="ListaPeliculas">
+            <HayRegistros>
+                <DetallePelicula pelicula="context" EliminarPelicula="EliminarPelicula"></DetallePelicula>
+            </HayRegistros>
+        </ListadoGenerico>
+    </div>
+}
+
+@code {
+    [Parameter] public List<Pelicula> ListaPeliculas { get; set; }
+    [Parameter] public RenderFragment Cargando { get; set; }
+    [Parameter] public RenderFragment NoRegistros { get; set; }
+    bool mostrarBotones = true;
+
+    void EliminarPelicula(Pelicula pelicula)
+    {
+        ListaPeliculas.Remove(pelicula);
+    }
+
+}
