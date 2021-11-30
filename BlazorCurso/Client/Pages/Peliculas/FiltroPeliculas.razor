@@ -1,5 +1,7 @@
 ﻿@page "/peliculas/buscar"
-@inject IRepositorio repositorio
+@inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
+@inject NavigationManager _navigationManager
 
 <h3>Filtro Peliculas</h3>
 
@@ -31,41 +33,85 @@
         <label class="form-check-label" for="masVotadas">Más Votadas</label>
     </div>
 
-    <button type="button" class="btn btn-primary mb-2 mx-sm-3" @onclick="CargarNuevasPeliculas">Filtrar</button>
+    <button type="button" class="btn btn-primary mb-2 mx-sm-3" @onclick="FiltrarPeliculas">Filtrar</button>
     <button type="button" class="btn btn-danger mb-2" @onclick="LimpiarOnClick">Limpiar</button>
 </div>
 
 <ListadoPeliculasConRenderFragmentGenerico ListaPeliculas="listaPeliculas"></ListadoPeliculasConRenderFragmentGenerico>
 
+<Paginacion PaginaActual="paginaActual" PaginaSeleccionada="PaginaSeleccionada" PaginasTotales="paginasTotales"></Paginacion>
+
 @code {
     private List<Pelicula> listaPeliculas;
+    private List<Genero> listaGeneros = new List<Genero>();
+    private Dictionary<string, string> queryStringsDict = new Dictionary<string, string>();
     string titulo = "";
     string generoSeleccionado = "0";
     private bool futurosEstrenos = false;
     private bool enCartelera = false;
     private bool masVotadas = false;
-    List<Genero> listaGeneros = new List<Genero>();
+    private int paginaActual = 1;
+    private int paginasTotales;
 
-    private void TituloKeyPress(KeyboardEventArgs e)
+    private async Task PaginaSeleccionada(int pagina)
+    {
+        paginaActual = pagina;
+        await CargarNuevasPeliculas();
+    }
+
+    private async Task TituloKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            CargarNuevasPeliculas();
+            await CargarNuevasPeliculas();
         }
     }
 
-    private void CargarNuevasPeliculas()
+    private async Task FiltrarPeliculas()
     {
-        Console.WriteLine($"titulo: {titulo}");
-        Console.WriteLine($"generoSeleccionado: {generoSeleccionado}");
-        Console.WriteLine($"futurosEstrenos: {futurosEstrenos}");
-        Console.WriteLine($"enCartelera: {enCartelera}");
-        Console.WriteLine($"masVotadas: {masVotadas}");
-
-        listaPeliculas = repositorio.GetListaPeliculas();
+        paginaActual = 1;
+        await CargarNuevasPeliculas();
     }
 
-    private void LimpiarOnClick()
+    private async Task CargarNuevasPeliculas()
+    {
+        var queryStrings = GenerarQueryStrings();
+        _navigationManager.NavigateTo("/peliculas/buscar?" + queryStrings);
+        await RealizarBusqueda(queryStrings);
+    }
+
+    private async Task RealizarBusqueda(string queryString)
+    {
+
+        var responseHttp = await _repositorio.Get<List<Pelicula>>($"api/peliculas/filtrar?{queryString}");
+
+        if (responseHttp.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+        }
+        else
+        {
+            paginasTotales = int.Parse(responseHttp.HttpResponseMessage.Headers.GetValues("totalPaginas").FirstOrDefault());
+            listaPeliculas = responseHttp.Response;
+        }
+    }
+
+    private string GenerarQueryStrings()
+    {
+        if (queryStringsDict == null) { queryStringsDict = new Dictionary<string, string>(); }
+        queryStringsDict["Titulo"] = titulo;
+        queryStringsDict["GeneroId"] = generoSeleccionado;
+        queryStringsDict["enCartelera"] = enCartelera.ToString();
+        queryStringsDict["Estrenos"] = futurosEstrenos.ToString();
+        queryStringsDict["Pagina"] = paginaActual.ToString();
+
+        //Quitamos los valores vacíos,falsos o 9 del queryString
+        var valoresPorDefecto = new List<string>() { "false", "", "0" };
+
+        return string.Join("&", queryStringsDict.Where(x => !valoresPorDefecto.Contains(x.Value.ToLower())).Select(x => $"{x.Key}={System.Web.HttpUtility.UrlEncode(x.Value)}").ToArray());
+    }
+
+    private async Task LimpiarOnClick()
     {
         titulo = "";
         generoSeleccionado = "0";
@@ -73,6 +119,73 @@
         enCartelera = false;
         masVotadas = false;
 
-        listaPeliculas = null;
+        paginaActual = 1;
+        await CargarNuevasPeliculas();
+    }
+
+    private async Task ObtenerGeneros()
+    {
+        var responseHttp = await _repositorio.Get<List<Genero>>("api/generos");
+
+        if (responseHttp.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+        }
+        else
+        {
+            listaGeneros = responseHttp.Response;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerGeneros();
+
+        var url = _navigationManager.Uri;
+        var queries = _navigationManager.ObtenerQueryStrings(url);
+        if (queries == null)
+            await RealizarBusqueda(string.Empty);
+        else
+        {
+            queryStringsDict = queries;
+            RellenarCampos();
+
+            var queryStrings = url.Split(new string[] { "?" }, StringSplitOptions.None)[1];
+            await RealizarBusqueda(queryStrings);
+        }
+
+    }
+
+    private void RellenarCampos()
+    {
+        if (queryStringsDict.ContainsKey("GeneroId"))
+        {
+            generoSeleccionado = queryStringsDict["GeneroId"];
+        }
+
+        if (queryStringsDict.ContainsKey("Titulo"))
+        {
+            titulo = queryStringsDict["Titulo"];
+        }
+
+        if (queryStringsDict.ContainsKey("enCartelera"))
+        {
+            bool.TryParse(queryStringsDict["enCartelera"], out enCartelera);
+        }
+
+        if (queryStringsDict.ContainsKey("Estrenos"))
+        {
+            bool.TryParse(queryStringsDict["Estrenos"], out futurosEstrenos);
+        }
+
+        if (queryStringsDict.ContainsKey("MasVotadas"))
+        {
+            bool.TryParse(queryStringsDict["MasVotadas"], out masVotadas);
+        }
+
+        if (queryStringsDict.ContainsKey("Pagina"))
+        {
+            int.TryParse(queryStringsDict["Pagina"], out paginaActual);
+        }
     }
 }

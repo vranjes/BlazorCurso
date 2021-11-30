@@ -1,3 +1,4 @@
+using AutoMapper;
 using BlazorCurso.Server.Helpers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 
 namespace BlazorCurso.Server
 {
@@ -23,11 +25,14 @@ namespace BlazorCurso.Server
         {
             services.AddDbContext<ApplicationDbContext>(options =>options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddControllersWithViews();
+            //La parte del NewtonsotJson es para evitar los errores al deserializar las entidades relacionadas
+            services.AddControllersWithViews().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore); ;
             services.AddRazorPages();
 
             services.AddHttpContextAccessor();
             services.AddScoped<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+
+            services.AddAutoMapper(typeof(Startup));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

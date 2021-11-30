@@ -1,5 +1,6 @@
 ﻿@page "/generos"
 @inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
 
 <h3>Indice Generos</h3>
 
@@ -21,8 +22,8 @@
                 {
                     <tr>
                         <td>
-                            <a class="btn btn-success">Editar</a>
-                            <button class="btn btn-danger">Borrar</button>
+                            <a class="btn btn-success" href="/generos/editar/@genero.Id">Editar</a>
+                            <button class="btn btn-danger" @onclick="(() =>EliminarGenero(genero))">Borrar</button>
                         </td>
                         <td>@genero.Nombre</td>
                     </tr>
@@ -35,7 +36,26 @@
     public List<Genero> Generos { get; set; }
     protected async override Task OnInitializedAsync()
     {
+        await Cargar();
+    }
+
+    private async Task Cargar()
+    {
         var responseHttp = await _repositorio.Get<List<Genero>>("api/generos");
         Generos = responseHttp.Response;
+    }
+
+    private async Task EliminarGenero(Genero genero)
+    {
+        var responseHttp = await _repositorio.Delete($"api/generos/{genero.Id}");
+
+        if (responseHttp.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+        }
+        else
+        {
+            await Cargar();
+        }
     }
 }

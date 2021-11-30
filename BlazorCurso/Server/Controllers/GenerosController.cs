@@ -27,22 +27,21 @@ namespace BlazorCurso.Server.Controllers
             return Ok(await _context.Generos.ToListAsync());
         }
 
-        // GET: Generos/Details/5
-        public async Task<IActionResult> Details(int? id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Genero>> Get(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var genero = await _context.Generos
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var genero = await _context.Generos.FirstOrDefaultAsync(m => m.Id == id);
             if (genero == null)
             {
                 return NotFound();
             }
 
-            return View(genero);
+            return Ok(genero);
         }
 
         // POST: Generos/Create
@@ -56,6 +55,26 @@ namespace BlazorCurso.Server.Controllers
                 return Ok(genero.Id);
             }
             return BadRequest();
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> Put(Genero genero)
+        {
+            _context.Attach(genero).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            var existe = await _context.Generos.AnyAsync(x => x.Id == id);
+
+            if (!existe) { return NotFound(); }
+
+            _context.Remove(new Genero { Id = id });
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
         private bool GeneroExists(int id)

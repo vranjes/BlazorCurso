@@ -1,33 +1,66 @@
 ﻿@page  "/peliculas/editar/{PeliculaId:int}"
+@inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
+@inject NavigationManager _navigationManager
 
 <h3>Editar Pelicula</h3>
 
+@if (pelicula != null)
+{
+    <FormularioPeliculas pelicula="pelicula" OnValidSubmit="GuardarCambios"
+                         GenerosSeleccionados="GenerosSeleccionados" GenerosNoSeleccionados="GenerosNoSeleccionados"
+                         ActoresSeleccionados="ActoresSeleccionados">
+    </FormularioPeliculas>
+}
+else
+{
+    <text>Cargando...</text>
+}
 
-<FormularioPeliculas pelicula="pelicula" OnValidSubmit="Editar" GenerosSeleccionados="GenerosSeleccionados" GenerosNoSeleccionados="GenerosNoSeleccionados"></FormularioPeliculas>
 
 @code {
     [Parameter] public int PeliculaId { get; set; }
-    private List<Genero> GenerosNoSeleccionados = new List<Genero>();
     private List<Genero> GenerosSeleccionados = new List<Genero>();
-    private Pelicula pelicula = new Pelicula();
+    private List<Genero> GenerosNoSeleccionados =  new List<Genero>();
+    private List<Persona> ActoresSeleccionados =  new List<Persona>();
+    private Pelicula pelicula;
 
-    void Editar()
+    private async Task GuardarCambios()
     {
-        Console.WriteLine("Edito la pelicula");
+        var responseHttp = await _repositorio.Put("api/peliculas", pelicula);
+
+        if (responseHttp.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+        }
+        else
+        {
+            _navigationManager.NavigateTo($"pelicula/{pelicula.Id}/{pelicula.Titulo.Replace(" ", "-")}");
+        }
     }
 
-    protected override void OnInitialized()
+    protected async override Task OnInitializedAsync()
     {
-        pelicula = new Pelicula() { Id = PeliculaId, Titulo = "Pelicula pruebas" };
-        GenerosNoSeleccionados = new List<Genero>()
+        var responseHttp = await _repositorio.Get<EditarPeliculaDTO>($"api/peliculas/actualizar/{PeliculaId}");
+
+        if (responseHttp.Error)
+        {
+            if (responseHttp.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                new Genero(){Id=2,Nombre="Drama"},
-                new Genero(){Id=3,Nombre="Acción"}
-            };
-        GenerosSeleccionados = new List<Genero>()
+                _navigationManager.NavigateTo("");
+            }
+            else
             {
-                new Genero(){Id=1,Nombre="Comedia"},
-                new Genero(){Id=4,Nombre="Sci-fi"}
-            };
+                await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+            }
+        }
+        else
+        {
+            var model = responseHttp.Response;
+            pelicula = model.Pelicula;
+            GenerosSeleccionados = model.GenerosSeleccionados;
+            GenerosNoSeleccionados = model.GenerosNoSeleccionados;
+            ActoresSeleccionados = model.ActoresSeleccionados;
+        }
     }
 }

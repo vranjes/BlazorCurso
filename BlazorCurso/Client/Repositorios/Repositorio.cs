@@ -70,6 +70,20 @@ namespace BlazorCurso.Client.Repositorios
             }
         }
 
+        public async Task<HttpResponseWrapper<object>> Put<T>(string url, T enviar)
+        {
+            var enviarJSON = JsonSerializer.Serialize(enviar);
+            var enviarContent = new StringContent(enviarJSON, Encoding.UTF8, "application/json");
+            var responseHttp = await _httpClient.PutAsync(url, enviarContent);
+            return new HttpResponseWrapper<object>(null, !responseHttp.IsSuccessStatusCode, responseHttp);
+        }
+
+        public async Task<HttpResponseWrapper<object>> Delete(string url)
+        {
+            var responseHttp = await _httpClient.DeleteAsync(url);
+            return new HttpResponseWrapper<object>(null, !responseHttp.IsSuccessStatusCode, responseHttp);
+        }
+
         private async Task<T> DeserializarRespuesta<T>(HttpResponseMessage httpResponse,JsonSerializerOptions jsonSerializerOptions)
         {
             var responseString = await httpResponse.Content.ReadAsStringAsync();

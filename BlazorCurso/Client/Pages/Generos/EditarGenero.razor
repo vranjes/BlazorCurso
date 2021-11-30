@@ -1,22 +1,56 @@
 ﻿@page "/generos/editar/{GeneroId:int}"
-@inject NavigationManager navigationManager
+@inject NavigationManager _navigationManager
+@inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
+
 <h3>Editar Género</h3>
 
-<FormularioGenero Genero="genero" OnValidSubmit="GuardarCambios" />
+@if (genero != null)
+{
+    <FormularioGenero Genero="genero" OnValidSubmit="GuardarCambios" />
+}
+else
+{
+    <text>Cargando...</text>
+}
+
 
 @code {
     [Parameter] public int GeneroId { get; set; }
     private Genero genero = new Genero();
 
-    protected override void OnInitialized()
+    private async Task GuardarCambios()
     {
-        Console.WriteLine($"Inicializo el genero con id {GeneroId}");
-        genero = new Genero() { Id = GeneroId, Nombre = "Comedia" };
+        var responseHttp = await _repositorio.Put("api/generos", genero);
+
+        if (responseHttp.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+        }
+        else
+        {
+            _navigationManager.NavigateTo("generos");
+        }
     }
 
-    private void GuardarCambios()
+    protected async override Task OnInitializedAsync()
     {
-        Console.WriteLine($"Guardo los cambios en el Género {genero.Nombre}");
-        navigationManager.NavigateTo("/generos");
+        var responseHttp = await _repositorio.Get<Genero>($"api/generos/{GeneroId}");
+
+        if (responseHttp.Error)
+        {
+            if (responseHttp.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _navigationManager.NavigateTo("generos");
+            }
+            else
+            {
+                await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+            }
+        }
+        else
+        {
+            genero = responseHttp.Response;
+        }
     }
 }

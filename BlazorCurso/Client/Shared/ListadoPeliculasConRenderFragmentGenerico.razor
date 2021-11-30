@@ -1,4 +1,6 @@
 ﻿@inject IJSRuntime js
+@inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
 
 @if (ListaPeliculas == null)
 {
@@ -27,7 +29,7 @@ else
     <div style="display: flex; flex-wrap:wrap; align-items:center;">
         <ListadoGenerico ListaGenerica="ListaPeliculas">
             <HayRegistros>
-                <DetallePelicula pelicula="context" EliminarPelicula="EliminarPelicula"></DetallePelicula>
+                <DetallePelicula pelicula="context" EliminarPelicula="EliminarPelicula" @key="context.Id"></DetallePelicula>
             </HayRegistros>
         </ListadoGenerico>
     </div>
@@ -39,9 +41,18 @@ else
     [Parameter] public RenderFragment NoRegistros { get; set; }
     bool mostrarBotones = true;
 
-    void EliminarPelicula(Pelicula pelicula)
+    private async Task EliminarPelicula(Pelicula pelicula)
     {
-        ListaPeliculas.Remove(pelicula);
+        var responseHttp = await _repositorio.Delete($"api/peliculas/{pelicula.Id}");
+
+        if (responseHttp.Error)
+        {
+            await _mostrarMensajes.MostrarMensajeError(await responseHttp.GetBody());
+        }
+        else
+        {
+            ListaPeliculas.Remove(pelicula);
+        }
     }
 
 }
