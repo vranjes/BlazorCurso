@@ -27,6 +27,29 @@ namespace BlazorCurso.Server.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet("visualizar/{id}")]
+        public async Task<ActionResult<PersonaVisualizarDTO>> Get(int id)
+        {
+            var persona = await _context.Personas.Where(x => x.Id == id)
+                                                    .Include(x => x.PeliculaActor).ThenInclude(x => x.Pelicula)
+                                                    .FirstOrDefaultAsync();
+
+            if (persona == null) { return NotFound(); }
+
+            persona.PeliculaActor = persona.PeliculaActor.OrderByDescending(x => x.Pelicula.Lanzamiento).ToList();
+
+            var model = new PersonaVisualizarDTO()
+            {
+                Nombre = persona.Nombre,
+                FechaNacimiento = persona.FechaNacimiento.Value,
+                Biografia = persona.Biografía,
+                Foto = persona.Foto,
+                Peliculas = persona.PeliculaActor.Select(x => x.Pelicula).ToList()
+            };
+
+            return model;
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Persona>> Get(int? id)
         {

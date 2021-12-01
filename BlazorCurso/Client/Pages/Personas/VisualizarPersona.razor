@@ -1,0 +1,69 @@
+﻿@page "/persona/{PersonaId:int}/{NombrePersona}"
+@page "/persona/{NombrePersona}"
+
+@inject IRepositorio _repositorio
+@inject IMostrarMensajes _mostrarMensajes
+@inject NavigationManager _navigationManager
+
+@if (model == null)
+{
+    <text>Cargando...</text>
+}
+else
+{
+    <h2>@model.Nombre</h2>
+
+    <span>@model.FechaNacimiento.ToString("dd MMM yyyy")</span>
+
+    <div style="display: flex;">
+        <span style="display: inline-block; margin-right: 5px;"><img src="@model.Foto" style="width: 225px; height: 315px" /></span>
+    </div>
+
+    <div style="margin-top: 10px;">
+        <h3>Biografía</h3>
+        <div>
+            <MostrarMarkDown ContenidoMarkdown="@model.Biografia"></MostrarMarkDown>
+        </div>
+    </div>
+    <div style="margin-top: 10px;">
+        <h3>Peliculas</h3>
+        <div style="display: flex; flex-direction: column">
+            @foreach (var pelicula in model.Peliculas)
+            {
+                <div style="margin-bottom: 2px;">
+                    <img style="width: 50px;" src="@pelicula.Poster" />
+                    <span style="display:inline-block;width: 200px;"><a href="/pelicula/@pelicula.Id/@pelicula.Titulo.Replace(" ", "-")">@pelicula.Titulo</a></span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int PersonaId { get; set; }
+    [Parameter] public string NombrePersona { get; set; }
+    private PersonaVisualizarDTO model;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var responseHtpp = await _repositorio.Get<PersonaVisualizarDTO>($"api/personas/visualizar/{PersonaId}");
+
+        if (responseHtpp.Error)
+        {
+            if (responseHtpp.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _navigationManager.NavigateTo("");
+            }
+            else
+            {
+                var mensajeError = await responseHtpp.GetBody();
+                await _mostrarMensajes.MostrarMensajeError(mensajeError);
+            }
+        }
+        else
+        {
+            model = responseHtpp.Response;
+        }
+
+    }
+}
